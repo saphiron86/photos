@@ -153,32 +153,7 @@
     <!-- WORK -->
     <section id="work">
       <h2>Selected Work</h2>
-      <div class="gallery">
-        <!-- Replace images and titles -->
-        <div class="card">
-          <img src="images/artwork-1.jpg" alt="Artwork title" />
-          <div class="info">
-            <h3>Artwork Title</h3>
-            <span>Digital Illustration · 2025</span>
-          </div>
-        </div>
-
-        <div class="card">
-          <img src="images/artwork-2.jpg" alt="Artwork title" />
-          <div class="info">
-            <h3>Artwork Title</h3>
-            <span>Concept Art · 2024</span>
-          </div>
-        </div>
-
-        <div class="card">
-          <img src="images/artwork-3.jpg" alt="Artwork title" />
-          <div class="info">
-            <h3>Artwork Title</h3>
-            <span>Painting · 2024</span>
-          </div>
-        </div>
-      </div>
+      <div class="gallery" id="gallery"></div>
     </section>
 
     <!-- ABOUT -->
@@ -207,7 +182,42 @@
   </footer>
 
   <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
+  // Automatically load all images from the images/ folder using GitHub Pages
+  // NOTE: GitHub Pages does NOT allow direct directory listing.
+  // This uses the GitHub API instead.
+
+  const GITHUB_USERNAME = "saphiron"; // <-- change this
+  const GITHUB_REPO = "saphiron.github.io"; // <-- change this
+  const IMAGE_FOLDER = "images";
+
+  const gallery = document.getElementById('gallery');
+
+  fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${IMAGE_FOLDER}`)
+    .then(res => res.json())
+    .then(files => {
+      files
+        .filter(file => file.type === 'file' && file.name.match(/\.(jpg|jpeg|png|webp|gif)$/i))
+        .forEach(file => {
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          card.innerHTML = `
+            <img src="${file.download_url}" alt="${file.name}" />
+            <div class="info">
+              <h3>${file.name.replace(/[-_]/g, ' ').replace(/\.[^/.]+$/, '')}</h3>
+              <span>Artwork</span>
+            </div>
+          `;
+
+          gallery.appendChild(card);
+        });
+    })
+    .catch(err => {
+      gallery.innerHTML = '<p style="color: var(--muted);">Unable to load images.</p>';
+      console.error(err);
+    });
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
 </body>
 </html>
