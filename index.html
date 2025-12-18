@@ -131,6 +131,50 @@
       color: var(--accent);
       text-decoration: none;
     }
+
+    /* ---------- Lightbox ---------- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.lightbox.active {
+  display: flex;
+}
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 12px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+}
+
+.lightbox span {
+  position: absolute;
+  top: 1.5rem;
+  right: 2rem;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Blur-up lazy loading */
+img[data-src] {
+  filter: blur(12px);
+  transition: filter 0.4s ease;
+}
+
+img.loaded {
+  filter: blur(0);
+}
+
   </style>
 </head>
 <body>
@@ -181,23 +225,15 @@
     © <span id="year"></span> Your Name · Built for GitHub Pages
   </footer>
 
-  <script>
-  // Load images from a local manifest (images/images.json)
-  // This is the most reliable method for GitHub Pages
-
+<script>
   const gallery = document.getElementById('gallery');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxClose = document.getElementById('lightboxClose');
 
   fetch('images/images.json')
-    .then(res => {
-      if (!res.ok) throw new Error('images.json not found');
-      return res.json();
-    })
+    .then(res => res.json())
     .then(images => {
-      if (!Array.isArray(images) || images.length === 0) {
-        gallery.innerHTML = '<p style="color: var(--muted);">No images listed.</p>';
-        return;
-      }
-
       images.forEach(name => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -207,21 +243,54 @@
           .replace(/\.[^/.]+$/, '');
 
         card.innerHTML = `
-          <img src="images/${name}" alt="${title}" loading="lazy" />
+          <img data-src="images/${name}" alt="${title}" loading="lazy">
           <div class="info">
             <h3>${title}</h3>
             <span>Artwork</span>
           </div>
         `;
 
+        const img = card.querySelector('img');
+
+        img.addEventListener('click', () => {
+          lightboxImg.src = img.src;
+          lightbox.classList.add('active');
+        });
+
         gallery.appendChild(card);
       });
-    })
-    .catch(() => {
-      gallery.innerHTML = '<p style="color: var(--muted);">Unable to load images. Make sure images/images.json exists.</p>';
+
+      /* IntersectionObserver lazy loading */
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            img.src = img.dataset.src;
+            img.onload = () => img.classList.add('loaded');
+            observer.unobserve(img);
+          }
+        });
+      }, { rootMargin: '200px' });
+
+      document.querySelectorAll('img[data-src]').forEach(img =>
+        observer.observe(img)
+      );
     });
+
+  lightboxClose.onclick = () => lightbox.classList.remove('active');
+  lightbox.onclick = e => {
+    if (e.target === lightbox) lightbox.classList.remove('active');
+  };
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') lightbox.classList.remove('active');
+  });
 
   document.getElementById('year').textContent = new Date().getFullYear();
 </script>
+
+  <div class="lightbox" id="lightbox">
+  <span id="lightboxClose">×</span>
+  <img id="lightboxImg" src="" alt="">
+</div>
 </body>
 </html>
