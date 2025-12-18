@@ -111,6 +111,10 @@
       font-size: 0.9rem;
     }
 
+    .card img {
+  cursor: zoom-in;
+    }
+    
     section {
       margin-top: 5rem;
     }
@@ -253,7 +257,7 @@ img.loaded {
         const img = card.querySelector('img');
 
         img.addEventListener('click', () => {
-          lightboxImg.src = img.src;
+          lightboxImg.src = img.dataset.src || img.src;
           lightbox.classList.add('active');
         });
 
