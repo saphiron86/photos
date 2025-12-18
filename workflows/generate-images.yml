@@ -2,8 +2,8 @@ name: Generate images.json
 
 on:
   push:
-    paths:
-      - "images/**"
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -16,18 +16,39 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Generate images.json
+      - name: Debug – list images folder
         run: |
-          echo "Generating images/images.json"
-          ls -la images || true
-          find images -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.gif' \) \
-            | sed 's|images/||' \
-            | sort \
-            | jq -R -s -c 'split("\n")[:-1]' > images/images.json
+          echo "Listing images folder:" 
+          ls -la
+          ls -la images || echo "images folder missing"
+
+      - name: Generate images.json (pure bash, no jq)
+        run: |
+          mkdir -p images
+          echo '[' > images/images.json
+          first=true
+          for f in images/*.{png,jpg,jpeg,webp,gif}; do
+            [ -e "$f" ] || continue
+            name=$(basename "$f")
+            if [ "$first" = true ]; then
+              first=false
+            else
+              echo ',' >> images/images.json
+            fi
+            echo "  \"$name\"" >> images/images.json
+          done
+          echo ']' >> images/images.json
+
+          echo "Generated images.json:" 
+          cat images/images.json
 
       - name: Commit images.json
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Auto-generate images.json"
-          file_pattern: images/images.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add images/images.json
+          git commit -m "Auto-generate images.json" || echo "No changes to commit"
+          git push
