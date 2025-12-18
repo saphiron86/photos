@@ -181,43 +181,38 @@
     © <span id="year"></span> Your Name · Built for GitHub Pages
   </footer>
 
-  <script>
-  // Automatically load all images from the images/ folder using GitHub Pages
-  // NOTE: GitHub Pages does NOT allow direct directory listing.
-  // This uses the GitHub API instead.
+<script>
+  const gallery = document.getElementById("gallery");
 
-  const GITHUB_USERNAME = "saphiron86"; // <-- change this
-  const GITHUB_REPO = "saphiron.github.io"; // <-- change this
-  const IMAGE_FOLDER = "images";
-
-  const gallery = document.getElementById('gallery');
-
-  fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${IMAGE_FOLDER}`)
+  fetch("images/images.json")
     .then(res => res.json())
-    .then(files => {
-      files
-        .filter(file => file.type === 'file' && file.name.match(/\.(jpg|jpeg|png|webp|gif)$/i))
-        .forEach(file => {
-          const card = document.createElement('div');
-          card.className = 'card';
+    .then(images => {
+      images.forEach(name => {
+        const card = document.createElement("div");
+        card.className = "card";
 
-          card.innerHTML = `
-            <img src="${file.download_url}" alt="${file.name}" />
-            <div class="info">
-              <h3>${file.name.replace(/[-_]/g, ' ').replace(/\.[^/.]+$/, '')}</h3>
-              <span>Artwork</span>
-            </div>
-          `;
+        const title = name
+          .replace(/[-_]/g, " ")
+          .replace(/\.[^/.]+$/, "");
 
-          gallery.appendChild(card);
-        });
+        card.innerHTML = `
+          <img src="images/${name}" alt="${title}" loading="lazy" />
+          <div class="info">
+            <h3>${title}</h3>
+            <span>Artwork</span>
+          </div>
+        `;
+
+        gallery.appendChild(card);
+      });
     })
-    .catch(err => {
-      gallery.innerHTML = '<p style="color: var(--muted);">Unable to load images.</p>';
-      console.error(err);
+    .catch(() => {
+      gallery.innerHTML =
+        "<p style='color: var(--muted)'>No images found.</p>";
     });
 
-  document.getElementById('year').textContent = new Date().getFullYear();
+  document.getElementById("year").textContent =
+    new Date().getFullYear();
 </script>
 </body>
 </html>
